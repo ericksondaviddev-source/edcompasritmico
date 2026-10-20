@@ -5143,3 +5143,32 @@
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 25%, transparent);
     }
     .creator-measure.layer-on { outline: 3px solid var(--cyan); outline-offset: 2px; }
+
+    /* ============================================================
+       ANADIDO (Fase 3): puntillos 3/8 y 6/8 + pista de silencios
+       (bloque agregado al final; no modifica ninguna regla previa)
+       ============================================================ */
+    .purple { background: #8b5cf6; }
+    .cyan { background: var(--cyan); }
+    .rhythm-block.rest-purple { border-color: #8b5cf6; }
+    .rhythm-block.rest-cyan { border-color: var(--cyan); }
+    .wheel-fill.purple { fill: #8b5cf6; }
+    .wheel-fill.cyan { fill: var(--cyan); }
+    .wheel-fill.rest-purple { stroke: #8b5cf6; stroke-width: 6; }
+    .wheel-fill.rest-cyan { stroke: var(--cyan); stroke-width: 6; }
+
+    .cue {
+      width: 78px;
+      border: 2px solid var(--line);
+      border-radius: 12px 20px 12px 20px;
+      background: var(--surface);
+      color: var(--ink);
+      font-weight: 900;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: opacity .15s ease, filter .15s ease;
+    }
+    .cue .loop-icon { font-size: 1.3rem; }
+    .cue span { display: block; font-size: .7rem; }
+    .cue.off { opacity: .45; filter: grayscale(.6); }
+    @media (max-width: 480px) { .cue { width: 64px; } }

@@ -10,7 +10,11 @@
         restQuarter: { fraction: '1/4', spoken: 'un cuarto', name: 'Silencio', className: 'gray rest-red', units: 2, silent: true },
         restEighth:  { fraction: '1/8', spoken: 'un octavo', name: 'Silencio', className: 'gray rest-blue', units: 1, silent: true },
         restHalf:    { fraction: '1/2', spoken: 'un medio', name: 'Silencio', className: 'gray rest-green', units: 4, silent: true },
-        whole:       { fraction: '1/1', spoken: 'un entero', name: 'Redonda', className: 'yellow', units: 8 }
+        whole:       { fraction: '1/1', spoken: 'un entero', name: 'Redonda', className: 'yellow', units: 8 },
+        dottedQuarter:     { fraction: '3/8', spoken: 'tres octavos', name: 'Puntillo', className: 'purple', units: 3 },
+        restDottedQuarter: { fraction: '3/8', spoken: 'tres octavos', name: 'Silencio', className: 'gray rest-purple', units: 3, silent: true },
+        dottedHalf:        { fraction: '6/8', spoken: 'seis octavos', name: 'Puntillo largo', className: 'cyan', units: 6 },
+        restDottedHalf:    { fraction: '6/8', spoken: 'seis octavos', name: 'Silencio', className: 'gray rest-cyan', units: 6, silent: true }
       };
 
       var LEVELS = {
@@ -19,11 +23,11 @@
         3: { title: 'Nivel 3 · Medio y silencio', mission: 'Suma un medio (1/2) y deja descansar un cuarto (1/4).', blocks: ['quarter', 'eighth', 'half', 'restQuarter'] },
         4: { title: 'Nivel 4 · Más silencios', mission: 'El tambor también descansa un octavo (1/8) o un medio (1/2).', blocks: ['quarter', 'eighth', 'half', 'restQuarter', 'restEighth', 'restHalf'] },
         5: { title: 'Nivel 5 · El círculo entero', mission: 'Descubre la redonda: un entero (1/1) llena todo el círculo.', blocks: ['quarter', 'eighth', 'half', 'restQuarter', 'restEighth', 'restHalf', 'whole'] },
-        6: { title: 'Nivel 6 · Mezcla total', mission: 'Copia el reto mezclando sonidos, piques y silencios.', blocks: ['quarter', 'eighth', 'half', 'restQuarter', 'restEighth', 'restHalf', 'whole'] },
+        6: { title: 'Nivel 6 · Mezcla total', mission: 'Copia el reto mezclando sonidos, piques y silencios.', blocks: ['quarter', 'eighth', 'half', 'restQuarter', 'restEighth', 'restHalf', 'whole', 'dottedQuarter', 'restDottedQuarter', 'dottedHalf', 'restDottedHalf'] },
         7: { title: 'Nivel 7 · Oído detective', mission: 'Escucha el ritmo secreto y reconstrúyelo. Tienes 2 intentos.', blocks: ['quarter', 'eighth', 'half', 'restQuarter', 'restEighth', 'restHalf'] },
-        8: { title: 'Nivel 8 · Tempo loco', mission: '¡Más rápido! Copia la mezcla y tócala a toda velocidad.', blocks: ['quarter', 'eighth', 'half', 'restQuarter', 'restEighth', 'restHalf', 'whole'] },
-        9: { title: 'Nivel 9 · Compás partido', mission: 'El ritmo también puede empezar con silencio: reconstruye el compás partido.', blocks: ['quarter', 'eighth', 'half', 'restQuarter', 'restEighth', 'restHalf'] },
-        10: { title: 'Nivel 10 · Gran final', mission: 'La prueba final: tres retos mezclando todo lo aprendido.', blocks: ['quarter', 'eighth', 'half', 'restQuarter', 'restEighth', 'restHalf', 'whole'] },
+        8: { title: 'Nivel 8 · Tempo loco', mission: '¡Más rápido! Copia la mezcla y tócala a toda velocidad.', blocks: ['quarter', 'eighth', 'half', 'restQuarter', 'restEighth', 'restHalf', 'whole', 'dottedQuarter', 'restDottedQuarter', 'dottedHalf', 'restDottedHalf'] },
+        9: { title: 'Nivel 9 · Compás partido', mission: 'El ritmo también puede empezar con silencio: reconstruye el compás partido.', blocks: ['quarter', 'eighth', 'half', 'restQuarter', 'restEighth', 'restHalf', 'dottedQuarter', 'restDottedQuarter', 'dottedHalf', 'restDottedHalf'] },
+        10: { title: 'Nivel 10 · Gran final', mission: 'La prueba final: tres retos mezclando todo lo aprendido.', blocks: ['quarter', 'eighth', 'half', 'restQuarter', 'restEighth', 'restHalf', 'whole', 'dottedQuarter', 'restDottedQuarter', 'dottedHalf', 'restDottedHalf'] },
         11: { title: 'Nivel 11 · Suma sonora', mission: 'Escucha 2 grupos de golpes: súmalos y coloca el total en el compás.', mathType: 'sum', blocks: ['eighth', 'quarter', 'half'] },
         12: { title: 'Nivel 12 · Resta silenciosa', mission: 'Escucha los golpes; los que se silencian se restan. Toca los que quedan.', mathType: 'sub', blocks: ['eighth', 'quarter', 'half', 'restEighth', 'restQuarter'] },
         13: { title: 'Nivel 13 · Cadena', mission: 'Secuencias encadenadas (3 grupos). ¡El tempo sube, mantén el ritmo!', mathType: 'chain', blocks: ['eighth', 'quarter', 'half'] },

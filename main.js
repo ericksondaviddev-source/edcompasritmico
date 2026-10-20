@@ -1383,6 +1383,14 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         loopCounter.classList.add('bump');
       }
 
+      /* — Añadido (Fase 3): pista de silencios — tic suave en las pausas para que
+         el pulso se SIENTA a través del silencio. Auto-apagada en niveles detective
+         porque el reto es identificar los silencios de oído (playSecret no la usa). — */
+      var restCueEnabled = true;
+      function playRestCue(at) {
+        try { noiseBurst(at, 0.055, 0.09, 5200); } catch (e) { }
+      }
+
       function playMeasure(repeats) {
         if (state.playing) return;
         repeats = repeats || 1;
@@ -1429,6 +1437,8 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
               if (!type.silent) {
                 var strength = p.type === 'eighth' ? .42 : p.type === 'whole' ? .8 : .62;
                 playSound(state.selectedSound, at, strength, { pitch: 0, echo: 0, bright: 55 });
+              } else if (restCueEnabled) {
+                playRestCue(at);
               }
             });
             if (!placements.length) errorSound(start + (roundDelay + 150) / 1000);
@@ -1796,6 +1806,16 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
 
       playBtn.addEventListener('click', function () { playMeasure(1); });
       loopBtn.addEventListener('click', function () { playMeasure(5); });
+      /* — Añadido (Fase 3): interruptor de la pista de silencios — */
+      var restCueToggleBtn = document.getElementById('restCueToggle');
+      if (restCueToggleBtn) {
+        restCueToggleBtn.addEventListener('click', function () {
+          restCueEnabled = !restCueEnabled;
+          restCueToggleBtn.setAttribute('aria-pressed', restCueEnabled ? 'true' : 'false');
+          restCueToggleBtn.classList.toggle('off', !restCueEnabled);
+          showPetSpeech(restCueEnabled ? '🤫 Pista de silencios: ¡encendida!' : 'Pista de silencios: apagada.', 2200);
+        });
+      }
       clearBtn.addEventListener('click', function () {
         if (state.playing) return;
         if (state.demo) endDemo(false);
@@ -2045,7 +2065,10 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         for (var cycle = 0; cycle < cycles; cycle++) {
           creatorState.measures.forEach(function (bar, barIndex) {
             bar.placements.forEach(function (p) {
-              if (TYPES[p.type].silent) return;
+              if (TYPES[p.type].silent) {
+                if (restCueEnabled) playRestCue(start + (cycle * 4 * barMs + barIndex * barMs + p.start * unitMs) / 1000);
+                return;
+              }
               var offsetMs = cycle * 4 * barMs + barIndex * barMs + p.start * unitMs;
               playSound(p.sound || bar.sound, start + offsetMs / 1000, p.type === 'eighth' ? .43 : .65, bar.settings);
             });
@@ -2370,6 +2393,12 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
           fanfareSound();
           celebratePetWin();
           showPetSpeech('🎉 ¡Nuevo modo desbloqueado: ' + unlockedNow.join(', ') + '!', 5000);
+          /* — Añadido (Fase 3): anuncio destacado del Creador multicompás al llegar al nivel 3 — */
+          if (unlockedNow.some(function (n) { return n.indexOf('Mi ritmo') > -1; })) {
+            setTimeout(function () {
+              levelPop('🎼 ¡Nuevo mundo desbloqueado!', 'Mi ritmo & Cancionero: crea canciones con 4 compases');
+            }, 1200);
+          }
         }
         updateNavButtonsLockState();
       }
@@ -5107,7 +5136,10 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         var start = ctx.currentTime + 0.05;
         var unitSec = 0.18;
         customBar.placements.forEach(function (p) {
-          if (TYPES[p.type] && TYPES[p.type].silent) return;
+          if (TYPES[p.type] && TYPES[p.type].silent) {
+            if (restCueEnabled) playRestCue(start + p.start * unitSec);
+            return;
+          }
           var snd = p.sound || customBar.sound || 'drum';
           playSound(snd, start + p.start * unitSec, p.type === 'eighth' ? 0.45 : 0.65, customBar.settings || { pitch: 0, echo: 0, bright: 50 });
         });
@@ -5123,7 +5155,10 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         bars.forEach(function (bar, i) {
           if (!bar || !bar.placements) return;
           bar.placements.forEach(function (p) {
-            if (TYPES[p.type] && TYPES[p.type].silent) return;
+            if (TYPES[p.type] && TYPES[p.type].silent) {
+              if (restCueEnabled) playRestCue(start + i * barSec + p.start * unitSec);
+              return;
+            }
             var snd = p.sound || bar.sound || 'drum';
             playSound(snd, start + i * barSec + p.start * unitSec, p.type === 'eighth' ? 0.45 : 0.65, bar.settings || { pitch: 0, echo: 0, bright: 50 });
           });
@@ -5139,7 +5174,10 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         bars.forEach(function (bar) {
           if (!bar || !bar.placements) return;
           bar.placements.forEach(function (p) {
-            if (TYPES[p.type] && TYPES[p.type].silent) return;
+            if (TYPES[p.type] && TYPES[p.type].silent) {
+              if (restCueEnabled) playRestCue(start + p.start * unitSec);
+              return;
+            }
             var snd = p.sound || bar.sound || 'drum';
             playSound(snd, start + p.start * unitSec, p.type === 'eighth' ? 0.45 : 0.65, bar.settings || { pitch: 0, echo: 0, bright: 50 });
           });
