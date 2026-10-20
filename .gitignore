@@ -1,0 +1,11 @@
+# Snapshot original de la app descargada (NO se publica: contiene archivos de terceros)
+Completa el compás.html
+Completa el compás_files/
+
+# Sistema
+.DS_Store
+Thumbs.db
+node_modules/
+
+# Vercel
+.vercel/
