@@ -5111,3 +5111,35 @@
     @media (max-width: 480px) {
       .intro-logo { width: 26px; height: 26px; }
     }
+
+    /* ============================================================
+       ANADIDO (Fase 2): Modo Capas — interruptores por compás
+       (bloque agregado al final; no modifica ninguna regla previa)
+       ============================================================ */
+    .creator-measure { position: relative; }
+    .creator-measure h3 { padding-right: 42px; }
+    .creator-layer-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      z-index: 2;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border: 2px solid var(--line);
+      border-radius: 10px 4px 10px 4px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: .95rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+    .creator-layer-btn.on {
+      background: var(--cyan);
+      border-color: #0e8a83;
+      color: #fff;
+      transform: scale(1.06);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 25%, transparent);
+    }
+    .creator-measure.layer-on { outline: 3px solid var(--cyan); outline-offset: 2px; }

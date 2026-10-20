@@ -931,8 +931,14 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         makeAudio();
         petWidget.classList.add('jump');
         setTimeout(function () { petWidget.classList.remove('jump'); }, 600);
-        if (petState.signatureRhythm && petState.signatureRhythm.placements && petState.signatureRhythm.placements.length > 0) {
-          playCustomRhythm(petState.signatureRhythm);
+        var sig = petState.signatureRhythm;
+        if (Array.isArray(sig) && sig.length > 0) {
+          playSignatureSequence(sig);
+          showPetSpeech('¡Escucha mi firma sonora de ' + sig.length + ' compases!', 3400);
+          return;
+        }
+        if (sig && sig.placements && sig.placements.length > 0) {
+          playCustomRhythm(sig);
           showPetSpeech('¡Escucha mi firma sonora propia!', 3200);
           return;
         }
@@ -1842,6 +1848,9 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         })
       };
 
+      /* — Añadido (Fase 2): capas marcadas para escucha simultánea — */
+      var creatorLayers = [false, false, false, false];
+
       function showCreatorMode() {
         if (!state.creatorUnlocked) return;
         gameApp.style.display = 'none';
@@ -1893,11 +1902,24 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         creatorMeasuresEl.innerHTML = '';
         creatorState.measures.forEach(function (bar, measureIndex) {
           var card = document.createElement('article');
-          card.className = 'creator-measure' + (creatorState.active === measureIndex ? ' active' : '');
+          card.className = 'creator-measure' + (creatorState.active === measureIndex ? ' active' : '') + (creatorLayers[measureIndex] ? ' layer-on' : '');
           card.addEventListener('click', function () { creatorState.active = measureIndex; renderCreator(); });
           var heading = document.createElement('h3');
           heading.textContent = 'Compás ' + (measureIndex + 1) + ' · ' + creatorBarUnits(bar) + '/8';
           card.appendChild(heading);
+          /* — Añadido (Fase 2): interruptor de capa para escucha simultánea — */
+          var layerBtn = document.createElement('button');
+          layerBtn.type = 'button';
+          layerBtn.className = 'creator-layer-btn' + (creatorLayers[measureIndex] ? ' on' : '');
+          layerBtn.textContent = '🔀';
+          layerBtn.title = 'Marcar para escuchar este compás junto a los otros marcados';
+          layerBtn.setAttribute('aria-pressed', creatorLayers[measureIndex] ? 'true' : 'false');
+          layerBtn.addEventListener('click', function (event) {
+            event.stopPropagation();
+            creatorLayers[measureIndex] = !creatorLayers[measureIndex];
+            renderCreator();
+          });
+          card.appendChild(layerBtn);
           var svg = svgEl('svg', { viewBox: '0 0 240 240', class: 'mini-wheel', role: 'group', 'aria-label': 'Compás ' + (measureIndex + 1) });
           var occupied = creatorOccupied(bar);
           for (var unit = 0; unit < 8; unit++) {
@@ -5091,6 +5113,39 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         });
       }
 
+      /* — Añadido (Fase 1): reproduce una firma sonora de varios compases en secuencia — */
+      function playSignatureSequence(bars) {
+        var ctx = makeAudio();
+        if (!ctx || !bars || !bars.length) return;
+        var unitSec = 0.19;
+        var barSec = unitSec * 8;
+        var start = ctx.currentTime + 0.05;
+        bars.forEach(function (bar, i) {
+          if (!bar || !bar.placements) return;
+          bar.placements.forEach(function (p) {
+            if (TYPES[p.type] && TYPES[p.type].silent) return;
+            var snd = p.sound || bar.sound || 'drum';
+            playSound(snd, start + i * barSec + p.start * unitSec, p.type === 'eighth' ? 0.45 : 0.65, bar.settings || { pitch: 0, echo: 0, bright: 50 });
+          });
+        });
+      }
+
+      /* — Añadido (Fase 2): reproduce los compases marcados SIMULTÁNEAMENTE (capas) — */
+      function playLayersTogether(bars) {
+        var ctx = makeAudio();
+        if (!ctx || !bars || !bars.length) return;
+        var start = ctx.currentTime + 0.08;
+        var unitSec = 0.19;
+        bars.forEach(function (bar) {
+          if (!bar || !bar.placements) return;
+          bar.placements.forEach(function (p) {
+            if (TYPES[p.type] && TYPES[p.type].silent) return;
+            var snd = p.sound || bar.sound || 'drum';
+            playSound(snd, start + p.start * unitSec, p.type === 'eighth' ? 0.45 : 0.65, bar.settings || { pitch: 0, echo: 0, bright: 50 });
+          });
+        });
+      }
+
       if (creatorSetPetRhythm) {
         creatorSetPetRhythm.addEventListener('click', function () {
           var bar = creatorState.measures[creatorState.active];
@@ -5105,6 +5160,43 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
           celebratePetWin();
           creatorNow.textContent = '✨ ¡Compás guardado como firma sonora de tu mascota!';
           showPetSpeech('¡Ahora tocaré este ritmo cuando me saludes! 🎶', 4000);
+        });
+      }
+
+      /* — Añadido (Fase 1): firma sonora multi-compás (2 a 4 compases en secuencia) — */
+      var creatorSetPetSignatureMulti = document.getElementById('creatorSetPetSignatureMulti');
+      if (creatorSetPetSignatureMulti) {
+        creatorSetPetSignatureMulti.addEventListener('click', function () {
+          var bars = creatorState.measures.filter(function (bar) {
+            return bar && bar.placements && bar.placements.length > 0;
+          });
+          if (bars.length < 2) {
+            creatorNow.textContent = 'Pon notas en 2 o más compases y vuelve a pulsar: ¡tu mascota aprenderá la secuencia!';
+            return;
+          }
+          petState.signatureRhythm = bars.map(function (bar) { return JSON.parse(JSON.stringify(bar)); });
+          savePetStorage();
+          confetti();
+          fanfareSound();
+          celebratePetWin();
+          creatorNow.textContent = '✨ ¡Tus ' + bars.length + ' compases son la nueva firma sonora de tu mascota!';
+          showPetSpeech('¡Aprenderé tu secuencia de ' + bars.length + ' compases! 🎶', 4000);
+        });
+      }
+
+      /* — Añadido (Fase 2): escuchar los compases marcados en capas simultáneas — */
+      var creatorPlayLayersBtn = document.getElementById('creatorPlayLayers');
+      if (creatorPlayLayersBtn) {
+        creatorPlayLayersBtn.addEventListener('click', function () {
+          var marked = creatorState.measures.filter(function (bar, i) {
+            return creatorLayers[i] && bar.placements.length > 0;
+          });
+          if (marked.length < 2) {
+            creatorNow.textContent = 'Marca 2 o más compases con 🔀 (y ponles notas) para oírlos juntos.';
+            return;
+          }
+          playLayersTogether(marked);
+          creatorNow.textContent = '🎧 Sonando ' + marked.length + ' compases en capas simultáneas…';
         });
       }
 
@@ -5217,6 +5309,26 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
             creatorNow.textContent = '¡Añadido "' + item.name + '" al Cancionero!';
           });
 
+          /* — Añadido (Fase 1): asignar directo como firma sonora de la mascota — */
+          var petBtn = document.createElement('button');
+          petBtn.className = 'btn-rhythm-load';
+          petBtn.style.background = 'var(--cyan)';
+          petBtn.style.borderColor = '#0e8a83';
+          petBtn.textContent = '🐾 Mascota';
+          petBtn.title = 'Asignar como firma sonora de tu mascota';
+          petBtn.addEventListener('click', function () {
+            if (item.bar && item.bar.placements && item.bar.placements.length) {
+              petState.signatureRhythm = JSON.parse(JSON.stringify(item.bar));
+              savePetStorage();
+              confetti();
+              fanfareSound();
+              celebratePetWin();
+              rhythmLibraryModal.style.display = 'none';
+              creatorNow.textContent = '✨ "' + (item.name || 'Compás') + '" es ahora la firma sonora de tu mascota.';
+              showPetSpeech('¡Tocaré "' + (item.name || 'tu compás') + '" cuando me saludes! 🎶', 4000);
+            }
+          });
+
           var delBtn = document.createElement('button');
           delBtn.className = 'btn-rhythm-delete';
           delBtn.textContent = '🗑️';
@@ -5230,6 +5342,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
           actions.appendChild(playBtn);
           actions.appendChild(loadBtn);
           actions.appendChild(addSongBtn);
+          actions.appendChild(petBtn);
           actions.appendChild(delBtn);
 
           card.appendChild(info);
