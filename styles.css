@@ -5096,3 +5096,18 @@
       .help-btn { width: 38px; height: 38px; font-size: 1.05rem; }
       .statusbar { gap: 8px; }
     }
+
+    /* ============================================================
+       ANADIDO: logo de marca en la intro
+       (bloque agregado al final; no modifica ninguna regla previa)
+       ============================================================ */
+    .intro-logo {
+      grid-column: 1;
+      justify-self: start;
+      width: 30px;
+      height: 30px;
+      filter: drop-shadow(0 2px 0 rgba(21, 50, 45, .12));
+    }
+    @media (max-width: 480px) {
+      .intro-logo { width: 26px; height: 26px; }
+    }

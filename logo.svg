@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ED Compás Ritmico">
+  <!-- Badge redondeado estilo de la app -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="#f4fbf6" stroke="#15322d" stroke-width="3"/>
+  <!-- Círculo del compás: 3 cuartos llenos... -->
+  <path d="M32 32 L32 12 A20 20 0 0 1 52 32 Z" fill="#f04444" stroke="#15322d" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M32 32 L52 32 A20 20 0 0 1 32 52 Z" fill="#ffd438" stroke="#15322d" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M32 32 L32 52 A20 20 0 0 1 12 32 Z" fill="#39a867" stroke="#15322d" stroke-width="2" stroke-linejoin="round"/>
+  <!-- ...y un cuarto punteado: ¡completa el compás! -->
+  <path d="M32 32 L12 32 A20 20 0 0 1 32 12 Z" fill="none" stroke="#15322d" stroke-width="3.5" stroke-dasharray="5.5 4.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="32" cy="32" r="5" fill="#15322d"/>
+</svg>

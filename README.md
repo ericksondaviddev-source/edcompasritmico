@@ -1,3 +1,5 @@
+<p align="center"><img src="logo.svg" width="120" alt="Logo de ED Compás Ritmico"></p>
+
 # 🥁 ED Compás Ritmico
 
 **Estudio musical y academia matemática infantil** — los niños aprenden fracciones
