@@ -358,7 +358,8 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         stallRate: 150,
         completedLevels: {},
         customName: '',
-        signatureRhythm: null
+        signatureRhythm: null,
+        tints: {}
       };
 
       function getPetDisplayName(petId) {
@@ -384,6 +385,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
               petState.completedLevels = data.completedLevels || {};
               petState.customName = typeof data.customName === 'string' ? data.customName : '';
               petState.signatureRhythm = data.signatureRhythm || null;
+              petState.tints = (data.tints && typeof data.tints === 'object') ? data.tints : {};
               return true;
             }
           }
@@ -406,7 +408,8 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
             stallRate: petState.stallRate,
             completedLevels: petState.completedLevels,
             customName: petState.customName || '',
-            signatureRhythm: petState.signatureRhythm || null
+            signatureRhythm: petState.signatureRhythm || null,
+            tints: petState.tints || {}
           }));
         } catch (e) {
           console.warn('Error guardando localStorage de mascotas', e);
@@ -818,7 +821,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         size = size || 48;
         var p = PETS[petId] || PETS.bumbo;
         stage = stage || 1;
-        var mainCol = p.color;
+        var mainCol = (petState && petState.tints && petState.tints[petId]) || p.color;
         var accCol = p.accent;
         var activeAcc = (accessoryId !== undefined) ? accessoryId : (petState && petState.equipped && petState.equipped[petId]);
         var accOverlay = getPetAccessorySvg(activeAcc);
@@ -4487,6 +4490,42 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
           desc: 'Desbloquea el sintetizador electrónico alegre en "Mi ritmo".',
           price: 40,
           iconSvg: '<svg viewBox="0 0 48 48"><ellipse cx="24" cy="24" rx="14" ry="14" fill="#f5d0fe"/><rect x="10" y="16" width="28" height="16" rx="3" fill="#8b5cf6"/><circle cx="16" cy="24" r="2.5" fill="#fff"/><circle cx="24" cy="24" r="2.5" fill="#fff"/><line x1="30" y1="20" x2="35" y2="20" stroke="#fff" stroke-width="2"/><line x1="30" y1="24" x2="35" y2="24" stroke="#fff" stroke-width="2"/></svg>'
+        },
+        /* — Añadido (Fase 4): tintes de color para el cuerpo de la mascota — */
+        {
+          id: 'tint_original', cat: 'tint', color: null,
+          name: 'Color original',
+          desc: 'Vuelve al color de nacimiento de tu mascota.',
+          price: 0,
+          iconSvg: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="14" fill="#f1f5f9"/><circle cx="24" cy="24" r="10" fill="none" stroke="#f04444" stroke-width="3"/><circle cx="24" cy="24" r="6" fill="none" stroke="#ffd438" stroke-width="3"/><circle cx="24" cy="24" r="2.5" fill="none" stroke="#39a867" stroke-width="3"/></svg>'
+        },
+        {
+          id: 'tint_violeta', cat: 'tint', color: '#8b5cf6',
+          name: 'Tinte Violeta',
+          desc: 'Un morado mágico y elegante.',
+          price: 45,
+          iconSvg: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="14" fill="#f1f5f9"/><ellipse cx="24" cy="26" rx="9" ry="12" fill="#8b5cf6" stroke="#5b21b6" stroke-width="1.5"/><path d="M18 14 q3 -4 6 0" stroke="#5b21b6" stroke-width="1.5" fill="none"/></svg>'
+        },
+        {
+          id: 'tint_cian', cat: 'tint', color: '#1daea5',
+          name: 'Tinte Cian',
+          desc: 'Fresco como el mar caribeño.',
+          price: 45,
+          iconSvg: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="14" fill="#f1f5f9"/><ellipse cx="24" cy="26" rx="9" ry="12" fill="#1daea5" stroke="#0e8a83" stroke-width="1.5"/><path d="M18 14 q3 -4 6 0" stroke="#0e8a83" stroke-width="1.5" fill="none"/></svg>'
+        },
+        {
+          id: 'tint_dorado', cat: 'tint', color: '#d4a017',
+          name: 'Tinte Dorado',
+          desc: 'Brilla como trofeo de campeón.',
+          price: 60,
+          iconSvg: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="14" fill="#f1f5f9"/><ellipse cx="24" cy="26" rx="9" ry="12" fill="#d4a017" stroke="#92600a" stroke-width="1.5"/><path d="M18 14 q3 -4 6 0" stroke="#92600a" stroke-width="1.5" fill="none"/></svg>'
+        },
+        {
+          id: 'tint_rosa', cat: 'tint', color: '#ec4899',
+          name: 'Tinte Rosa',
+          desc: 'Dulce y divertido como chicle.',
+          price: 60,
+          iconSvg: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="14" fill="#f1f5f9"/><ellipse cx="24" cy="26" rx="9" ry="12" fill="#ec4899" stroke="#9d174d" stroke-width="1.5"/><path d="M18 14 q3 -4 6 0" stroke="#9d174d" stroke-width="1.5" fill="none"/></svg>'
         }
       ];
 
@@ -4497,6 +4536,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
       var shareOutfitBtn = document.getElementById('shareOutfitBtn');
       var marketAccessoriesGrid = document.getElementById('marketAccessoriesGrid');
       var marketInstrumentsGrid = document.getElementById('marketInstrumentsGrid');
+      var marketTintsGrid = document.getElementById('marketTintsGrid');
       var openEggBtn = document.getElementById('openEggBtn');
 
       var eggModal = document.getElementById('eggModal');
@@ -4543,6 +4583,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         if (!marketAccessoriesGrid || !marketInstrumentsGrid) return;
         marketAccessoriesGrid.innerHTML = '';
         marketInstrumentsGrid.innerHTML = '';
+        if (marketTintsGrid) marketTintsGrid.innerHTML = '';
 
         MARKET_ITEMS.forEach(function (item) {
           var card = document.createElement('article');
@@ -4591,6 +4632,25 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
               btn.disabled = (petState.coins < item.price);
               btn.addEventListener('click', function () { buyMarketItem(item); });
             }
+          } else if (item.cat === 'tint') {
+            /* — Añadido (Fase 4): tintes de color para la mascota — */
+            var tintOwned = owned || item.price === 0;
+            var isApplied = (item.color === null)
+              ? !(petState.tints && petState.tints[petState.id])
+              : !!(petState.tints && petState.tints[petState.id] === item.color);
+            if (isApplied) {
+              btn.textContent = 'Aplicado ✓';
+              btn.classList.add('is-equipped');
+              btn.disabled = true;
+            } else if (tintOwned) {
+              btn.textContent = 'Aplicar';
+              btn.classList.add('equip');
+              btn.addEventListener('click', function () { applyTint(item); });
+            } else {
+              btn.textContent = 'Comprar (' + item.price + ' 🪙)';
+              btn.disabled = (petState.coins < item.price);
+              btn.addEventListener('click', function () { buyMarketItem(item); });
+            }
           } else {
             // Instrumento
             if (owned) {
@@ -4606,6 +4666,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
           card.appendChild(btn);
 
           if (item.cat === 'acc') marketAccessoriesGrid.appendChild(card);
+          else if (item.cat === 'tint') { if (marketTintsGrid) marketTintsGrid.appendChild(card); }
           else marketInstrumentsGrid.appendChild(card);
         });
       }
@@ -4624,6 +4685,8 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
           if (!petState.equipped) petState.equipped = {};
           petState.equipped[petState.id] = item.id;
         }
+        /* — Añadido (Fase 4): comprar un tinte lo aplica de inmediato — */
+        if (item.cat === 'tint') applyTint(item);
         savePetStorage();
         updatePetWidget();
         updateWeeklyMissionProgress('m2_market_shop', 1);
@@ -4631,6 +4694,22 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         confetti();
         renderMarketView();
         showPetSpeech('¡Estupendo! Adquiriste ' + item.name + '.', 3500);
+      }
+
+      /* — Añadido (Fase 4): aplicar o quitar el tinte de color de la mascota — */
+      function applyTint(item) {
+        if (!petState.tints) petState.tints = {};
+        if (item.color === null) {
+          delete petState.tints[petState.id];
+          showPetSpeech('¡De vuelta a mi color original!', 3000);
+        } else {
+          petState.tints[petState.id] = item.color;
+          showPetSpeech('¡Me encanta mi nuevo color! 🎨', 3000);
+        }
+        savePetStorage();
+        updatePetWidget();
+        renderMarketView();
+        confetti();
       }
 
       function equipAccessory(accId) {
