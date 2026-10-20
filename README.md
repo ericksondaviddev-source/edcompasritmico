@@ -27,7 +27,7 @@ Creado por **ED-Dev** · App 100% estática, sin dependencias, sin backend.
 
 - 🎵 **18 niveles** progresivos: del pulso básico a la polirritmia, con rachas de aciertos y saltos de nivel
 - ➗ **Academia matemática**: sumas, restas, multiplicaciones y divisiones *sonoras* (niveles 11–18)
-- 🥁 **Figuras rítmicas**: cuartos, octavos, medios, redondas, silencios y **puntillos (3/8 y 6/8)** con síncopa real
+- 🥁 **Figuras rítmicas**: cuartos, octavos, medios, redondas, silencios, **puntillos (3/8)** con síncopa y **piques dobles (2/16)** "ta-ka" · con lección interactiva de picos nuevos
 - 🤫 **Pista de silencios**: tic suave durante las pausas para que el pulso se sienta a través del vacío (con toggle; los retos de oído quedan intactos)
 - 🐣 **Mascotas con evolución**: Bumbo, Clave y Güira crecen con XP, se bautizan, llevan accesorios, **tintes de color** y una **firma sonora** que puede ser de 1 hasta 4 compases
 - ✏️ **Creador de ritmos**: 4 compases, polifonía por nota (cada nota con su instrumento), **Modo Capas** para oír compases simultáneos, y exportación MP3/WAV

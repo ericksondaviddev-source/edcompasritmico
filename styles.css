@@ -5246,3 +5246,31 @@
     #creatorMoreOptions[hidden] { display: none; }
     .creator-action.more { border-style: dashed; }
     .creator-action.more[aria-expanded="true"] { border-style: solid; background: var(--surface-2); }
+
+    /* ============================================================
+       ANADIDO (Fase 6): 2/16 pique doble + leccion de picos +
+       pulso GPU (fluidéz durante la vuelta) 
+       ============================================================ */
+    .indigo { background: #6366f1; }
+    .rhythm-block.indigo { border-color: #3730a3; }
+    .wheel-fill.indigo { fill: #6366f1; }
+
+    /* Pulso de notas optimizado: transform+opacity (GPU), sin filtros */
+    .wheel-fill { transform-box: fill-box; transform-origin: center; }
+    .wheel-fill.pulse { filter: none !important; transform: scale(1.045); opacity: .88; }
+
+    /* Lección de picos nuevos */
+    .picadas-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      margin: 8px 0;
+      border: 2px solid var(--line);
+      border-radius: 14px 6px 14px 6px;
+      background: var(--surface-2);
+    }
+    .picadas-row strong { font-family: "Baloo 2", sans-serif; font-size: 1.02rem; display: block; margin-bottom: 3px; }
+    .picadas-row p { margin: 0; font-size: .82rem; font-weight: 700; color: var(--muted); line-height: 1.25; }
+    .picadas-row button { flex: 0 0 auto; }

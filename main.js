@@ -462,10 +462,27 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         if (!audio) {
           var Ctx = window.AudioContext || window.webkitAudioContext;
           if (Ctx) audio = new Ctx();
+          /* — Añadido (Fase 6): bus master con compresor — pega la mezcla y
+             evita la saturación cuando suenan varias notas a la vez — */
+          if (audio) {
+            var comp = audio.createDynamicsCompressor();
+            comp.threshold.value = -18;
+            comp.knee.value = 22;
+            comp.ratio.value = 5;
+            comp.attack.value = 0.004;
+            comp.release.value = 0.16;
+            var master = audio.createGain();
+            master.gain.value = 0.9;
+            master.connect(comp);
+            comp.connect(audio.destination);
+            audioMaster = master;
+          }
         }
         if (audio && audio.state === 'suspended') audio.resume();
         return audio;
       }
+      var audioMaster = null;
+      function out(ctx) { return audioMaster || (ctx ? ctx.destination : null); }
 
       function drum(at, pitch, strength) {
         var ctx = makeAudio();
@@ -478,7 +495,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         gain.gain.setValueAtTime(0.0001, at);
         gain.gain.exponentialRampToValueAtTime(strength || 0.55, at + 0.008);
         gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.26);
-        osc.connect(gain).connect(ctx.destination);
+        osc.connect(gain).connect(out(ctx));
         osc.start(at);
         osc.stop(at + 0.28);
 
@@ -490,7 +507,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         noise.buffer = buffer;
         ng.gain.setValueAtTime(.12 * (strength || .55), at);
         ng.gain.exponentialRampToValueAtTime(.0001, at + .055);
-        noise.connect(ng).connect(ctx.destination);
+        noise.connect(ng).connect(out(ctx));
         noise.start(at);
       }
 
@@ -508,7 +525,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         gain.gain.setValueAtTime(volume, at);
         gain.gain.exponentialRampToValueAtTime(.0001, at + duration);
         source.buffer = buffer;
-        source.connect(filter).connect(gain).connect(ctx.destination);
+        source.connect(filter).connect(gain).connect(out(ctx));
         source.start(at);
       }
 
@@ -519,18 +536,21 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         var gain = ctx.createGain();
         osc.type = kind || 'sine';
         osc.frequency.setValueAtTime(frequency, at);
-        gain.gain.setValueAtTime(volume, at);
+        /* — Añadido (Fase 6): ataque suave de 4ms — elimina el clic digital
+           al iniciar cada nota (antes arrancaba a volumen máximo) — */
+        gain.gain.setValueAtTime(0.0001, at);
+        gain.gain.linearRampToValueAtTime(volume, at + 0.004);
         gain.gain.exponentialRampToValueAtTime(.0001, at + duration);
-        osc.connect(gain).connect(ctx.destination);
+        osc.connect(gain).connect(out(ctx));
         osc.start(at);
         osc.stop(at + duration + .03);
       }
 
       function playPercussion(kind, at, strength) {
         strength = strength || .55;
-        if (kind === 'drum') drum(at, 145, strength);
-        else if (kind === 'kick') drum(at, 78, Math.min(.85, strength + .16));
-        else if (kind === 'snare') { noiseBurst(at, .19, .34 * strength, 750); tone(at, 170, .12, .13 * strength, 'triangle'); }
+        if (kind === 'drum') { drum(at, 145, strength); noiseBurst(at, 0.012, 0.22 * strength, 3200); }
+        else if (kind === 'kick') { drum(at, 78, Math.min(.85, strength + .16)); noiseBurst(at, 0.014, 0.3 * strength, 1800); }
+        else if (kind === 'snare') { noiseBurst(at, .19, .34 * strength, 750); noiseBurst(at, .05, .3 * strength, 2600); tone(at, 170, .12, .13 * strength, 'triangle'); }
         else if (kind === 'shaker') noiseBurst(at, .095, .3 * strength, 4200);
         else if (kind === 'clap') {
           noiseBurst(at, .055, .26 * strength, 1200);
@@ -539,6 +559,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         } else if (kind === 'bell') {
           tone(at, 880, .7, .15 * strength, 'sine');
           tone(at, 1320, .55, .09 * strength, 'sine');
+          tone(at, 2640, .3, .04 * strength, 'sine');
         }
       }
 
@@ -553,7 +574,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         filter.type = 'lowpass';
         filter.frequency.setValueAtTime(Math.min(frequency * 3.5, 2200), at);
         filter.Q.value = 1.8;
-        filter.connect(ctx.destination);
+        filter.connect(out(ctx));
 
         var osc1 = ctx.createOscillator();
         var gain1 = ctx.createGain();
@@ -603,7 +624,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         gain1.gain.setValueAtTime(0.0001, at);
         gain1.gain.exponentialRampToValueAtTime(0.5 * strength, at + 0.002);
         gain1.gain.exponentialRampToValueAtTime(0.0001, at + duration);
-        gain1.connect(ctx.destination);
+        gain1.connect(out(ctx));
         osc1.connect(gain1);
         osc1.start(at);
         osc1.stop(at + duration + 0.03);
@@ -615,7 +636,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         gainPing.gain.setValueAtTime(0.0001, at);
         gainPing.gain.exponentialRampToValueAtTime(0.3 * strength, at + 0.002);
         gainPing.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
-        gainPing.connect(ctx.destination);
+        gainPing.connect(out(ctx));
         oscPing.connect(gainPing);
         oscPing.start(at);
         oscPing.stop(at + 0.18);
@@ -646,7 +667,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         gain.gain.linearRampToValueAtTime(0.42 * strength, at + 0.045);
         gain.gain.setValueAtTime(0.36 * strength, at + duration * 0.7);
         gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
-        osc.connect(gain).connect(ctx.destination);
+        osc.connect(gain).connect(out(ctx));
         osc.start(at);
         osc.stop(at + duration + 0.05);
 
@@ -657,7 +678,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         gain2.gain.setValueAtTime(0.0001, at);
         gain2.gain.linearRampToValueAtTime(0.12 * strength, at + 0.05);
         gain2.gain.exponentialRampToValueAtTime(0.0001, at + duration * 0.8);
-        osc2.connect(gain2).connect(ctx.destination);
+        osc2.connect(gain2).connect(out(ctx));
         osc2.start(at);
         osc2.stop(at + duration + 0.05);
 
@@ -715,7 +736,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
           g.gain.setValueAtTime(.0001, at + i * .045);
           g.gain.exponentialRampToValueAtTime(.12, at + i * .045 + .02);
           g.gain.exponentialRampToValueAtTime(.0001, at + .55 + i * .045);
-          o.connect(g).connect(ctx.destination);
+          o.connect(g).connect(out(ctx));
           o.start(at + i * .045);
           o.stop(at + .65);
         });
@@ -731,7 +752,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         o.frequency.exponentialRampToValueAtTime(65, at + .36);
         g.gain.setValueAtTime(.12, at);
         g.gain.exponentialRampToValueAtTime(.0001, at + .4);
-        o.connect(g).connect(ctx.destination);
+        o.connect(g).connect(out(ctx));
         o.start(at);
         o.stop(at + .42);
       }
@@ -1199,6 +1220,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
             state.selected = key;
             renderTray();
             setFeedback('Ahora toca un sector del círculo.', '');
+            maybeShowPicadasLesson(key);
           });
           tray.appendChild(b);
         });
@@ -1367,9 +1389,12 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         }, delay);
       }
 
-      function startPlayhead() {
+      function startPlayhead(roundMs) {
         playhead.classList.remove('running');
         void playhead.offsetWidth;
+        /* — Añadido (Fase 6): la órbita dura exactamente una vuelta del compás
+           (antes 2s fijos: se desincronizaba en Tempo loco, N8) — */
+        playhead.style.animationDuration = (roundMs || 2000) + 'ms';
         playhead.classList.add('running');
       }
 
@@ -1429,7 +1454,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
           (function (roundIndex) {
             var roundDelay = roundIndex * roundMs;
             setTimeout(function () {
-              startPlayhead();
+              startPlayhead(roundMs);
               setLoopCounter(roundIndex + 1, repeats);
             }, roundDelay);
 
@@ -1440,6 +1465,8 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
               if (!type.silent) {
                 var strength = p.type === 'eighth' ? .42 : p.type === 'whole' ? .8 : .62;
                 playSound(state.selectedSound, at, strength, { pitch: 0, echo: 0, bright: 55 });
+                /* — Añadido (Fase 6): pique doble 2/16 = segundo golpe a medio octavo — */
+                if (type.twin) playSound(state.selectedSound, at + unitMs / 2000, .34, { pitch: 0, echo: 0, bright: 55 });
               } else if (restCueEnabled) {
                 playRestCue(at);
               }
@@ -1819,6 +1846,55 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
           showPetSpeech(restCueEnabled ? '🤫 Pista de silencios: ¡encendida!' : 'Pista de silencios: apagada.', 2200);
         });
       }
+
+      /* ============================================================
+         Añadido (Fase 6): lección de picos nuevos — 3/8 y 2/16.
+         Se muestra UNA sola vez, la primera vez que el niño elige
+         un bloque de puntillo o pique doble en cualquier bandeja.
+         ============================================================ */
+      var PICADAS_KEY = 'compas_picadas_lesson_v1';
+      function maybeShowPicadasLesson(typeKey) {
+        if (typeKey !== 'dottedQuarter' && typeKey !== 'sixteenthPair') return;
+        try { if (localStorage.getItem(PICADAS_KEY) === 'true') return; } catch (e) { return; }
+        var modal = document.getElementById('picadasLessonModal');
+        if (modal) modal.hidden = false;
+      }
+      function closePicadasLesson() {
+        try { localStorage.setItem(PICADAS_KEY, 'true'); } catch (e) { }
+        var modal = document.getElementById('picadasLessonModal');
+        if (modal) modal.hidden = true;
+      }
+      function picadaDemo38() {
+        var ctx = makeAudio();
+        if (!ctx) return;
+        var t = ctx.currentTime + 0.08;
+        var u = 0.25;
+        // TAM-ta: así suena el 3/8 (cuarto + octavo pegados)
+        playSound('drum', t, 0.62, { pitch: 0, echo: 0, bright: 55 });
+        playSound('drum', t + 2 * u, 0.42, { pitch: 0, echo: 0, bright: 55 });
+        // ta-TAM: con los bloques sueltos el orden puede cambiar
+        playSound('drum', t + 2.2, 0.42, { pitch: 0, echo: 0, bright: 55 });
+        playSound('drum', t + 2.2 + u, 0.62, { pitch: 0, echo: 0, bright: 55 });
+      }
+      function picadaDemo216() {
+        var ctx = makeAudio();
+        if (!ctx) return;
+        var t = ctx.currentTime + 0.08;
+        var u = 0.25;
+        // ta: un octavo normal
+        playSound('drum', t, 0.62, { pitch: 0, echo: 0, bright: 55 });
+        // ta-ka: el pique doble parte el octavo en dos rapiditos
+        playSound('drum', t + 0.9, 0.5, { pitch: 0, echo: 0, bright: 55 });
+        playSound('drum', t + 0.9 + u / 2, 0.34, { pitch: 0, echo: 0, bright: 55 });
+      }
+      (function bindPicadasLesson() {
+        var close = document.getElementById('picadasLessonClose');
+        if (close) close.addEventListener('click', closePicadasLesson);
+        var d38 = document.getElementById('picadasDemo38');
+        if (d38) d38.addEventListener('click', picadaDemo38);
+        var d216 = document.getElementById('picadasDemo216');
+        if (d216) d216.addEventListener('click', picadaDemo216);
+      }());
       clearBtn.addEventListener('click', function () {
         if (state.playing) return;
         if (state.demo) endDemo(false);
@@ -2005,6 +2081,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
             creatorState.selected = key;
             renderCreatorTray();
             creatorNow.textContent = 'Bloque ' + (item.silent ? 'silencio de ' : '') + item.spoken + ' elegido.';
+            maybeShowPicadasLesson(key);
           });
           creatorTrayEl.appendChild(button);
         });
@@ -2074,6 +2151,8 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
               }
               var offsetMs = cycle * 4 * barMs + barIndex * barMs + p.start * unitMs;
               playSound(p.sound || bar.sound, start + offsetMs / 1000, p.type === 'eighth' ? .43 : .65, bar.settings);
+              /* — Añadido (Fase 6): pique doble 2/16 — */
+              if (TYPES[p.type].twin) playSound(p.sound || bar.sound, start + offsetMs / 1000 + unitMs / 2000, .34, bar.settings);
             });
           });
         }
@@ -5221,6 +5300,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
           }
           var snd = p.sound || customBar.sound || 'drum';
           playSound(snd, start + p.start * unitSec, p.type === 'eighth' ? 0.45 : 0.65, customBar.settings || { pitch: 0, echo: 0, bright: 50 });
+          if (TYPES[p.type].twin) playSound(snd, start + p.start * unitSec + unitSec / 2, .32, customBar.settings || { pitch: 0, echo: 0, bright: 50 });
         });
       }
 
@@ -5240,6 +5320,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
             }
             var snd = p.sound || bar.sound || 'drum';
             playSound(snd, start + i * barSec + p.start * unitSec, p.type === 'eighth' ? 0.45 : 0.65, bar.settings || { pitch: 0, echo: 0, bright: 50 });
+            if (TYPES[p.type].twin) playSound(snd, start + i * barSec + p.start * unitSec + unitSec / 2, .32, bar.settings || { pitch: 0, echo: 0, bright: 50 });
           });
         });
       }
@@ -5259,6 +5340,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
             }
             var snd = p.sound || bar.sound || 'drum';
             playSound(snd, start + p.start * unitSec, p.type === 'eighth' ? 0.45 : 0.65, bar.settings || { pitch: 0, echo: 0, bright: 50 });
+            if (TYPES[p.type].twin) playSound(snd, start + p.start * unitSec + unitSec / 2, .32, bar.settings || { pitch: 0, echo: 0, bright: 50 });
           });
         });
       }
