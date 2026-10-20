@@ -1973,7 +1973,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
             option.value = key;
             var isPremium = (key === 'bells' || key === 'synth');
             var isUnlocked = !isPremium || isItemOwned('sound_' + key);
-            option.textContent = SOUNDS[key].name + (!isUnlocked ? ' (🔒 Mercadito)' : '');
+            option.textContent = SOUNDS[key].name + (!isUnlocked ? ' 🔒' : '');
             if (!isUnlocked) option.disabled = true;
             option.selected = bar.sound === key;
             select.appendChild(option);
@@ -5281,6 +5281,18 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
       }
 
       /* — Añadido (Fase 1): firma sonora multi-compás (2 a 4 compases en secuencia) — */
+      /* — Añadido (Fase 5): botón "Más opciones" del creador — */
+      var creatorMoreToggle = document.getElementById('creatorMoreToggle');
+      if (creatorMoreToggle) {
+        creatorMoreToggle.addEventListener('click', function () {
+          var box = document.getElementById('creatorMoreOptions');
+          var abierto = !box.hidden;
+          box.hidden = abierto;
+          creatorMoreToggle.setAttribute('aria-expanded', String(!abierto));
+          creatorMoreToggle.textContent = abierto ? '⋯ Más opciones' : '✕ Cerrar opciones';
+        });
+      }
+
       var creatorSetPetSignatureMulti = document.getElementById('creatorSetPetSignatureMulti');
       if (creatorSetPetSignatureMulti) {
         creatorSetPetSignatureMulti.addEventListener('click', function () {

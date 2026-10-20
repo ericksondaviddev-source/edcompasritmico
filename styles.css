@@ -5172,3 +5172,77 @@
     .cue span { display: block; font-size: .7rem; }
     .cue.off { opacity: .45; filter: grayscale(.6); }
     @media (max-width: 480px) { .cue { width: 64px; } }
+
+    /* ============================================================
+       ANADIDO (Fase 5): optimización móvil del usuario real
+       — ancho del creador, fluidez, bloques compactos y orden —
+       ============================================================ */
+
+    /* 1) "Mi ritmo" al ancho correcto: la fila de pastillas de sonido y los
+       selects largos inflaban el ancho mínimo del grid a ~640px (zoom-out).
+       Tracks con mínimo 0: el grid nunca crece más allá del contenedor. */
+    @media (max-width: 800px) {
+      .creator-grid { grid-template-columns: minmax(0, 1fr) !important; }
+    }
+    @media (max-width: 520px) {
+      .creator-measures { grid-template-columns: minmax(0, 1fr); }
+      .measure-sound { font-size: .82rem; }
+      .studio-panel, .learn-panel, .lab-panel { min-width: 0; }
+      .creator-sound-pill-bar { min-width: 0; }
+      .creator-measure { min-width: 0; }
+    }
+
+    /* 2) Fluidez: quitar filtros costosos en móviles (Android) */
+    @media (max-width: 800px) {
+      .rhythm-wheel, .mini-wheel { filter: none; }
+      .wheel-fill.pulse { filter: brightness(1.3); transform: scale(1.02); }
+      .intro-pet svg { filter: none; }
+      .coop-chest-modal, .weekly-missions-modal, .duel-win-modal,
+      .rhythm-library-modal, .math-academy-modal { backdrop-filter: none; }
+    }
+
+    /* 3) Bloques más compactos y ordenados */
+    .rhythm-block { width: min(21vw, 108px); min-width: 76px; min-height: 68px; border-radius: 14px 6px 14px 6px; }
+    .rhythm-block .fraction { font-size: 1.55rem; }
+    .rhythm-block .name { font-size: .64rem; }
+    .creator-tray .rhythm-block { width: min(17vw, 86px); min-width: 66px; min-height: 56px; }
+    .creator-tray .rhythm-block .fraction { font-size: 1.22rem; }
+    .tray { gap: 8px; }
+    .creator-tray .tray { gap: 6px; }
+
+    /* 4) Controles DENTRO del compás: fila compacta bajo el círculo */
+    .board .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: stretch;
+      margin: 14px 0 0;
+    }
+    .board .controls .play { flex: 1 1 130px; margin: 0; min-height: 54px; }
+    .board .controls .loop,
+    .board .controls .clear,
+    .board .controls .cue { flex: 0 0 auto; margin: 0; min-height: 54px; }
+    @media (max-width: 480px) {
+      .board .controls .play { flex: 1 1 100%; }
+      .board .controls .loop,
+      .board .controls .clear,
+      .board .controls .cue { flex: 1 1 30%; width: auto; }
+    }
+
+    /* 5) Botón "Bautizar" visible y claro */
+    .pet-rename-btn {
+      border: 2px solid var(--line);
+      background: var(--surface-2);
+      color: var(--ink);
+      padding: 5px 9px;
+      font-size: .78rem;
+      font-weight: 900;
+      border-radius: 9px 4px 9px 4px;
+    }
+    .pet-rename-btn:hover { background: var(--surface); }
+
+    /* 6) Opciones desplegables del creador */
+    #creatorMoreOptions { display: contents; }
+    #creatorMoreOptions[hidden] { display: none; }
+    .creator-action.more { border-style: dashed; }
+    .creator-action.more[aria-expanded="true"] { border-style: solid; background: var(--surface-2); }
