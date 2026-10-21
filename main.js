@@ -1,5 +1,6 @@
 import { COMPAS } from './logic.js';
 import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.js';
+import { t, tLevel, tUnlock, tSpoken, tName, tf, thint, getLang, setLang, applyStaticTexts } from './i18n.js';
 
 (function () {
       'use strict';
@@ -1015,9 +1016,9 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
           card.innerHTML =
             '<div class="pet-card-avatar">' + getPetSvg(pet.id, 2, 60) + '</div>' +
             '<h3 class="pet-card-name">' + pet.name + '</h3>' +
-            '<span class="pet-card-role">' + pet.role + '</span>' +
-            '<p class="pet-card-desc">' + pet.desc + '</p>' +
-            '<button class="pet-sound-sample-btn" type="button">🎵 Escuchar</button>';
+            '<span class="pet-card-role">' + t('pet_' + pet.id + '_role') + '</span>' +
+            '<p class="pet-card-desc">' + t('pet_' + pet.id + '_desc') + '</p>' +
+            '<button class="pet-sound-sample-btn" type="button">' + t('listen') + '</button>';
 
           var sampleBtn = card.querySelector('.pet-sound-sample-btn');
           sampleBtn.addEventListener('click', function (e) {
@@ -1190,14 +1191,14 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
 
         var complete = totalUnits() === 8;
         measure.classList.toggle('complete', complete);
-        wheel.setAttribute('aria-label', complete ? 'Círculo completo: cuatro de cuatro.' : hintText());
+        wheel.setAttribute('aria-label', complete ? t('wheelAria') : hintText());
         circleGuide.textContent = state.level === 1
-          ? '4 sectores · cada trozo rojo es un cuarto (1/4).'
+          ? t('guide1')
           : state.level === 5
-            ? 'La redonda (1/1) llena los 8 octavos: el círculo entero.'
+            ? t('guide5')
             : state.level >= 6 && state.target
-              ? (state.level === 7 ? 'Escucha primero. Después reconstruye sin mirar.' : 'Reto: ' + targetText(state.target))
-              : '8 octavos · dos octavos (1/8) forman un cuarto (1/4).';
+              ? (state.level === 7 ? t('guide7') : t('guidePrefix') + targetText(state.target))
+              : t('guideDefault');
       }
 
       function sectorLabel(start, span, occupied) {
@@ -1218,8 +1219,8 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
           b.className = 'rhythm-block ' + item.className + (state.selected === key ? ' selected' : '');
           b.dataset.type = key;
           b.setAttribute('aria-pressed', state.selected === key ? 'true' : 'false');
-          var spokenLabel = item.silent ? 'silencio · ' + item.spoken : item.spoken;
-          b.setAttribute('aria-label', item.name + ': ' + item.spoken + ', ' + item.fraction);
+          var spokenLabel = item.silent ? t('restPrefix') + tSpoken(key) : tSpoken(key);
+          b.setAttribute('aria-label', tName(key) + ': ' + tSpoken(key) + ', ' + item.fraction);
           b.innerHTML = '<span class="fraction">' + item.fraction + '</span><span class="name">' + spokenLabel + '</span>';
           b.addEventListener('click', function () {
             if (state.playing) return;
@@ -1227,7 +1228,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
             makeAudio();
             state.selected = key;
             renderTray();
-            setFeedback('Ahora toca un sector del círculo.', '');
+            setFeedback(t('pickBlock'), '');
             maybeShowPicadasLesson(key);
           });
           tray.appendChild(b);
@@ -1259,11 +1260,11 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
 
       function renderStatus() {
         var currentLevel = LEVELS[state.level] || LEVELS[1];
-        document.getElementById('levelTitle').textContent = currentLevel.title;
-        document.getElementById('mission').textContent = currentLevel.mission;
+        document.getElementById('levelTitle').textContent = tLevel(state.level, 'title');
+        document.getElementById('mission').textContent = tLevel(state.level, 'mission');
         document.getElementById('score').textContent = state.score;
         if (levelSelectToggle) {
-          levelSelectToggle.textContent = 'Nivel ' + state.level + ' ▾';
+          levelSelectToggle.textContent = t('statusLevel') + state.level + ' ▾';
         }
 
         var isLevel14 = (state.level === 14 || state.level === 18);
@@ -1319,7 +1320,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
       }
 
       function hintText() {
-        return COMPAS.hintFor(COMPAS.placementsTotal(state.placements));
+        return thint(COMPAS.placementsTotal(state.placements));
       }
 
       var fractionVerb = COMPAS.fractionVerb;
@@ -1433,13 +1434,13 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         if (state.demo) endDemo(true);
         var ctx = makeAudio();
         if (!ctx) {
-          setFeedback('Este navegador no puede reproducir el tambor.', 'try');
+          setFeedback(t('noAudio'), 'try');
           return;
         }
         state.playing = true;
         playBtn.disabled = true;
         loopBtn.disabled = true;
-        setFeedback(repeats > 1 ? '¡El ritmo dará cinco vueltas!' : 'El punto recorre tu compás…', '');
+        setFeedback(repeats > 1 ? t('fiveRounds') : t('circlePlaying'), '');
         setLoopCounter(1, repeats);
 
         var unitMs = state.level === 8 ? 150 : 250;
@@ -1541,7 +1542,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         state.streak += 1;
         renderStatus();
         renderWheel();
-        setFeedback('¡Círculo completo! +1 acierto', 'good');
+        setFeedback(t('circleComplete'), 'good');
         confetti();
 
         // Celebración de la mascota en cada acierto
@@ -1575,44 +1576,12 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
             state.streak = 0;
             state.challengeIndex = 0;
             checkModeUnlocksOnLevelUp(state.level);
-            var unlocked = state.level === 2
-              ? 'Un cuarto (1/4) ahora se pica en dos octavos (1/8)'
-              : state.level === 3
-                ? 'Dos cuartos (1/4) forman un medio (1/2)'
-                : state.level === 4
-                  ? 'Nuevas pausas de un octavo y un medio'
-                  : state.level === 5
-                    ? 'Una redonda (1/1) llena todo el círculo'
-                    : state.level === 6
-                      ? 'Ahora mezclamos todo lo que aprendiste'
-                      : state.level === 7
-                        ? 'Escucha con atención... ¡ahora hazlo tú!'
-                        : state.level === 8
-                          ? '¡Más rápido!'
-                          : state.level === 9
-                            ? 'El silencio también abre el compás'
-                            : state.level === 10
-                              ? 'La prueba final: todo mezclado'
-                              : state.level === 11
-                                ? 'Fase 2: Suma sonora con golpes rítmicos'
-                                : state.level === 12
-                                  ? 'Resta silenciosa: apaga los golpes'
-                                  : state.level === 13
-                                    ? 'Cadena rítmica a tempo creciente'
-                                    : state.level === 14
-                                      ? 'Reto mixto de suma y resta'
-                                      : state.level === 15
-                                        ? 'Multiplicación con ritmo: veces'
-                                        : state.level === 16
-                                          ? 'División con ritmo: reparto equitativo'
-                                          : state.level === 17
-                                            ? 'Tablas rítmicas al pulso'
-                                            : 'Gran Reto 2: ¡Las 4 operaciones!';
-            levelPop('¡Nivel ' + state.level + '!', unlocked + ' · +100 XP' + coinsLabel);
+            var unlocked = tUnlock(state.level);
+            levelPop(t('levelUp') + state.level + '!', unlocked + ' · +100 XP' + coinsLabel);
 
             setTimeout(function () {
               state.selected = LEVELS[state.level].blocks[0];
-              clearCircle('¡Nuevo reto desbloqueado!');
+              clearCircle(t('newChallenge'));
               renderTray();
               renderStatus();
               setupChallenge();
@@ -1623,7 +1592,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
             state.streak = 0;
             state.creatorUnlocked = true;
             renderStatus();
-            levelPop('¡Fase 2 Completada!', '¡Has dominado las 4 operaciones con ritmo! · +100 XP' + coinsLabel);
+            levelPop(t('levelComplete'), '¡Has dominado las 4 operaciones con ritmo! · +100 XP' + coinsLabel);
             confetti();
             checkPetEvolution(oldStage);
             setTimeout(function () {
@@ -1633,7 +1602,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         } else {
           setTimeout(function () {
             if (state.level >= 6) state.challengeIndex += 1;
-            clearCircle('¡Muy bien! Vamos con otro reto.');
+            clearCircle(t('anotherRound'));
             setupChallenge();
           }, 900);
         }
@@ -1724,9 +1693,8 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         circleVisuals.classList.toggle('show-block', scene >= 4);
         introDots.forEach(function (dot, index) { dot.classList.toggle('on', index === scene - 1); });
         introDotsWrap.setAttribute('aria-label', 'Escena ' + scene + ' de ' + INTRO_SCENE_TOTAL);
-        introCopy.textContent = scene <= INTRO_SCENES.length
-          ? INTRO_SCENES[scene - 1]
-          : TOUR_SCENES[scene - INTRO_SCENES.length - 1];
+        introCopy.textContent = t((scene <= INTRO_SCENES.length ? 'introScene' : 'tourScene') +
+          (scene <= INTRO_SCENES.length ? scene : scene - INTRO_SCENES.length));
         introCopy.classList.remove('cue');
         void introCopy.offsetWidth;
         introCopy.classList.add('cue');
@@ -1839,6 +1807,19 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         document.body.classList.add('intro-open');
         startIntro();
       });
+      /* — Añadido (Fase 8): interruptor de idioma ES/EN — */
+      var langToggleBtn = document.getElementById('langToggle');
+      if (langToggleBtn) {
+        langToggleBtn.addEventListener('click', function () {
+          setLang(getLang() === 'es' ? 'en' : 'es');
+          langToggleBtn.textContent = t('langBtn');
+          applyStaticTexts();
+          renderTray();
+          renderStatus();
+          renderWheel();
+          updatePetWidget();
+        });
+      }
       levelLessonSkip.addEventListener('click', finishLevelLesson);
       levelLessonContinue.addEventListener('click', finishLevelLesson);
 
@@ -1907,7 +1888,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         if (state.playing) return;
         if (state.demo) endDemo(false);
         makeAudio();
-        clearCircle('Elige un bloque y vuelve a tocar el círculo.');
+        clearCircle(t('chooseBlock'));
       });
 
       var demoTimers = [];
@@ -1917,11 +1898,11 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         state.demo = false;
         if (!keepCircle) state.placements = [];
         renderWheel();
-        setFeedback('Ahora tú: elige rojo y completa el círculo.', '');
+        setFeedback(t('nowYou'), '');
       }
 
       function runDemo() {
-        setFeedback('Mira cómo se completa el círculo…', '');
+        setFeedback(t('demoWatch'), '');
         for (var i = 0; i < 4; i++) {
           (function (index) {
             demoTimers.push(setTimeout(function () {
@@ -6481,6 +6462,10 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
       renderStatus();
       updatePetWidget();
       updateNavButtonsLockState();
+      /* — Añadido (Fase 8): idioma guardado + textos estáticos — */
+      applyStaticTexts();
+      var langBtnBoot = document.getElementById('langToggle');
+      if (langBtnBoot) langBtnBoot.textContent = t('langBtn');
 
       /* — Añadido (Fase 7): pre-calentar el AudioContext en el PRIMER gesto.
          Crear el contexto tarda ~0.5–1.5s y congelaba el hilo en el primer

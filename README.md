@@ -7,6 +7,28 @@
   <a href="https://github.com/ericksondaviddev-source/edcompasritmico/blob/main/LICENSE">Licencia MIT</a>
 </p>
 
+<p align="center"><em>🇬🇧 English below · Español abajo</em></p>
+
+## 🇬🇧 English
+
+**ED Compás Ritmico** — a musical studio + math academy for kids: children learn
+**fractions by building rhythm bars**. Every block is a fraction (1/4, 1/8, 1/2, 3/8, 2/16…)
+and together they fill the circle of the bar — one whole!
+
+- 🎵 18 progressive levels: from the basic pulse to real syncopation
+- ➗ Sound math academy: addition, subtraction, multiplication and division *you can hear* (levels 11–18)
+- 🐣 Evolving pets: name them, buy accessories and tints, give them a **sound signature** of 1 to 4 bars
+- ✏️ 4-bar Creator with per-note instruments, **Layer mode** (hear bars simultaneously), MP3/WAV export
+- 🤫 Rest cue: a soft tick during silences so kids feel the pulse through the gap
+- 🎯 Bilingual **ES/EN** with one tap (the core game loop teaches math vocabulary in both languages)
+- 📱 Mobile-first, zero dependencies, static app
+
+**▶ Try it live: [edcompasritmico.vercel.app](https://edcompasritmico.vercel.app)**
+
+---
+
+## 🇪🇸 Español
+
 **Estudio musical y academia matemática infantil** — los niños aprenden fracciones
 construyendo compases rítmicos: cada bloque musical es una fracción (`1/4`, `1/8`,
 `1/2`, `3/8`, `6/8`…) y juntos llenan el círculo del compás (¡un entero!).
