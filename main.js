@@ -461,7 +461,7 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
       function makeAudio() {
         if (!audio) {
           var Ctx = window.AudioContext || window.webkitAudioContext;
-          if (Ctx) audio = new Ctx();
+          if (Ctx) audio = new Ctx({ latencyHint: 'interactive' });
           /* — Añadido (Fase 6): bus master con compresor — pega la mezcla y
              evita la saturación cuando suenan varias notas a la vez — */
           if (audio) {
@@ -514,9 +514,16 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
       function noiseBurst(at, duration, volume, highpass) {
         var ctx = makeAudio();
         if (!ctx) return;
-        var buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * duration), ctx.sampleRate);
-        var data = buffer.getChannelData(0);
-        for (var i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+        /* — Añadido (Fase 7): buffer de ruido COMPARTIDO — antes se creaba un
+           AudioBuffer nuevo con bucle de números aleatorios en CADA golpe
+           (caja=2, palmas=3, pista=1...): churn de memoria que provocaba
+           micro-congelones en móviles durante la reproducción. — */
+        if (!noiseBurst.buffer || noiseBurst.buffer.sampleRate !== ctx.sampleRate) {
+          var len = Math.floor(ctx.sampleRate * 1);
+          noiseBurst.buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+          var data = noiseBurst.buffer.getChannelData(0);
+          for (var i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+        }
         var source = ctx.createBufferSource();
         var filter = ctx.createBiquadFilter();
         var gain = ctx.createGain();
@@ -524,9 +531,10 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         filter.frequency.value = highpass || 900;
         gain.gain.setValueAtTime(volume, at);
         gain.gain.exponentialRampToValueAtTime(.0001, at + duration);
-        source.buffer = buffer;
+        source.buffer = noiseBurst.buffer;
         source.connect(filter).connect(gain).connect(out(ctx));
         source.start(at);
+        source.stop(at + duration + 0.02);
       }
 
       function tone(at, frequency, duration, volume, kind) {
@@ -2091,7 +2099,6 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
         renderCreatorMeasures();
         renderCreatorTray();
         updateLab();
-        updateCreatorMath();
       }
 
       function setKnob(faceId, value, min, max) {
@@ -2321,8 +2328,8 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
       var creatorShowMapBtn = document.getElementById('creatorShowMap');
       var mapShowGameBtn = document.getElementById('mapShowGame');
       var mapShowCreatorBtn = document.getElementById('mapShowCreator');
-      var creatorMathTotal = document.getElementById('creatorMathTotal');
-      var creatorMathEvalBtn = document.getElementById('creatorMathEvalBtn');
+      /* — Fase 7: barra de álgebra lineal retirada del creador
+         (muy compleja para niños); sus elementos ya no existen — */
 
       var duoView = document.getElementById('duoView');
       var simonView = document.getElementById('simonView');
@@ -4456,33 +4463,12 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
       }
 
       function updateCreatorMath() {
-        if (!creatorMathTotal) return;
-        var totalUnits = 0;
-        creatorState.measures.forEach(function (bar) {
-          totalUnits += COMPAS.barUnits(bar);
-        });
-        var wholes = Math.floor(totalUnits / 8);
-        var rem = totalUnits % 8;
-        var text = totalUnits + '/32 octavos = ' + wholes + ' entero' + (wholes === 1 ? '' : 's');
-        if (rem > 0) text += ' y ' + rem + '/8';
-        creatorMathTotal.textContent = text;
+        /* — Retirado (Fase 7): guard inofensivo por si quedara alguna llamada. — */
+        return;
       }
 
-      if (creatorMathEvalBtn) {
-        creatorMathEvalBtn.addEventListener('click', function () {
-          var b1 = COMPAS.barUnits(creatorState.measures[0]);
-          var b2 = COMPAS.barUnits(creatorState.measures[1]);
-          var sum = b1 + b2;
-          var diff = Math.abs(b1 - b2);
-          var msg = 'Compás 1 (' + b1 + '/8) + Compás 2 (' + b2 + '/8) suman ' + sum + '/8.';
-          if (sum === 8) msg += ' ¡Hacen exactamente 1 entero!';
-          else msg += ' Diferencia: ' + diff + ' octavos.';
-          creatorNow.textContent = msg;
-          showPetSpeech(msg, 4000);
-          makeAudio();
-          chime((audio ? audio.currentTime : 0) + 0.05);
-        });
-      }
+      /* — Fase 7: el botón 'Comparar C1 y C2' fue retirado junto con la
+         barra de álgebra lineal del creador — */
 
       /* =========================================================
          MÓDULO E: TIENDA "EL MERCADITO DEL COMPÁS"
@@ -6132,40 +6118,117 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
       var teacherDownloadVideoMp4 = document.getElementById('teacherDownloadVideoMp4');
       var teacherVideoCanvas = document.getElementById('teacherVideoCanvas');
 
-      function drawTeacherGuideFrame(ctx, step) {
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(0, 0, 600, 340);
+      /* — Fase 7: video guía mejorado — 10 etapas con subtítulos didácticos,
+         incluye silencios, puntillo 3/8 y pique 2/16, con puntos de progreso — */
+      var TEACHER_STEPS = [
+        { draw: 'intro',   cap: 'El compás es un círculo',                       sub: 'Todo ritmo se reparte en este círculo: representa 1 entero.' },
+        { draw: 'whole',   cap: '1 entero (redonda)',                            sub: 'Un solo bloque llena todo el círculo.' },
+        { draw: 'half',    cap: '1/2 (blanca)',                                 sub: 'Dos medios hacen un entero: 1/2 + 1/2 = 1.' },
+        { draw: 'quarter', cap: '1/4 (negra)',                                   sub: 'Cuatro cuartos: 4 × 1/4 = 1. ¡El pulso rojo!' },
+        { draw: 'eighth',  cap: '1/8 (corchea)',                                 sub: 'Ocho octavos: 8 × 1/8 = 1. Cada cuarto se pica en dos.' },
+        { draw: 'rest',    cap: 'El silencio también cuenta',                     sub: 'La pausa gris vale 1/4: el tiempo sigue aunque el tambor calle.' },
+        { draw: 'dotted',  cap: '3/8 · puntillo',                                sub: '1/4 + 1/8 pegados: TAM-ta. ¡Cambia el acento del ritmo!' },
+        { draw: 'pique',   cap: '2/16 · pique doble',                            sub: 'Un octavo partido en dos golpes rapiditos: ta-ka.' },
+        { draw: 'mix',     cap: 'Fracciones que suenan juntas',                   sub: '1/4 + 1/8 + 3/8 + piques… siempre suman el entero: 8/8 = 1.' },
+        { draw: 'final',   cap: '¡A completar el compás!',                        sub: 'La app guía al niño paso a paso. No necesitas saber música.' }
+      ];
 
+      function drawTeacherGuideFrame(ctx, step) {
+        var W = 600, H = 340;
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, W, H);
+        ctx.textAlign = 'center';
         ctx.fillStyle = '#38bdf8';
         ctx.font = 'bold 20px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Neurociencia y Matemática del Compás', 300, 36);
+        ctx.fillText('Fracciones Rítmicas · Guía para docentes y familias', 300, 34);
 
-        var cx = 300, cy = 170, radius = 95;
-        var labels = ['1 (Redonda)', '1/2 (Blanca)', '1/4 (Negra)', '1/8 (Corchea)'];
-        var divisions = [1, 2, 4, 8];
-        var divCount = divisions[step % 4];
+        var s = TEACHER_STEPS[step % TEACHER_STEPS.length];
+        var cx = 300, cy = 168, r = 92;
+        var COL = { red: '#f43f5e', blue: '#3b82f6', green: '#10b981', yellow: '#f59e0b', purple: '#8b5cf6', indigo: '#6366f1', gray: '#64748b' };
 
-        for (var i = 0; i < divCount; i++) {
-          var a1 = (i / divCount) * Math.PI * 2 - Math.PI / 2;
-          var a2 = ((i + 1) / divCount) * Math.PI * 2 - Math.PI / 2;
+        function wedge(i, count, color) {
+          var a1 = (i / count) * Math.PI * 2 - Math.PI / 2;
+          var a2 = ((i + 1) / count) * Math.PI * 2 - Math.PI / 2;
           ctx.beginPath();
           ctx.moveTo(cx, cy);
-          ctx.arc(cx, cy, radius, a1, a2);
+          ctx.arc(cx, cy, r, a1, a2);
           ctx.closePath();
-          ctx.fillStyle = ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b'][i % 4];
+          ctx.fillStyle = color;
           ctx.fill();
           ctx.strokeStyle = '#ffffff';
           ctx.lineWidth = 2;
           ctx.stroke();
         }
+        function centro() {
+          ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+          ctx.fillStyle = '#f8fafc'; ctx.fill();
+        }
+
+        var u, cols;
+        switch (s.draw) {
+          case 'whole': wedge(0, 1, COL.yellow); centro(); break;
+          case 'half': for (u = 0; u < 2; u++) wedge(u, 2, COL.green); centro(); break;
+          case 'quarter': for (u = 0; u < 4; u++) wedge(u, 4, COL.red); centro(); break;
+          case 'eighth': for (u = 0; u < 8; u++) wedge(u, 8, COL.blue); centro(); break;
+          case 'rest':
+            for (u = 0; u < 4; u++) wedge(u, 4, u === 1 ? COL.gray : COL.red);
+            centro();
+            ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 13px sans-serif';
+            ctx.fillText('silencio 1/4', cx, cy + r + 24);
+            break;
+          case 'dotted':
+            for (u = 0; u < 8; u++) wedge(u, 8, u < 3 ? COL.purple : '#1e293b');
+            centro();
+            ctx.fillStyle = '#c4b5fd'; ctx.font = 'bold 13px sans-serif';
+            ctx.fillText('3/8', cx, cy + r + 24);
+            break;
+          case 'pique':
+            for (u = 0; u < 8; u++) wedge(u, 8, u === 0 ? COL.indigo : '#1e293b');
+            // línea que parte el primer octavo (ta-ka)
+            var aP = (0.5 / 8) * Math.PI * 2 - Math.PI / 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(aP) * (r + 8), cy + Math.sin(aP) * (r + 8));
+            ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 3;
+            ctx.stroke();
+            centro();
+            ctx.fillStyle = '#a5b4fc'; ctx.font = 'bold 13px sans-serif';
+            ctx.fillText('ta-ka', cx, cy + r + 24);
+            break;
+          case 'mix':
+            cols = [COL.red, COL.red, COL.blue, COL.purple, COL.purple, COL.purple, COL.indigo, COL.indigo];
+            for (u = 0; u < 8; u++) wedge(u, 8, cols[u]);
+            centro();
+            break;
+          case 'final':
+            wedge(0, 1, COL.yellow);
+            ctx.fillStyle = '#0f172a'; ctx.font = 'bold 22px sans-serif';
+            ctx.fillText('1', cx, cy + 8);
+            break;
+          default:
+            ctx.setLineDash([7, 6]);
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.strokeStyle = '#475569'; ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.setLineDash([]);
+            centro();
+        }
 
         ctx.fillStyle = '#f8fafc';
-        ctx.font = 'bold 18px sans-serif';
-        ctx.fillText('Etapa: ' + labels[step % 4], 300, 290);
+        ctx.font = 'bold 19px sans-serif';
+        ctx.fillText(s.cap, 300, 290);
         ctx.font = '14px sans-serif';
         ctx.fillStyle = '#94a3b8';
-        ctx.fillText('El pulso musical ancla la relación de proporcionalidad espacial y auditiva.', 300, 315);
+        ctx.fillText(s.sub, 300, 313);
+
+        // puntos de progreso
+        var actual = step % TEACHER_STEPS.length;
+        for (var d = 0; d < TEACHER_STEPS.length; d++) {
+          ctx.beginPath();
+          ctx.arc(300 + (d - (TEACHER_STEPS.length - 1) / 2) * 14, 331, 4, 0, Math.PI * 2);
+          ctx.fillStyle = d <= actual ? '#38bdf8' : '#334155';
+          ctx.fill();
+        }
       }
 
       if (teacherPlayVideoBtn && teacherVideoCanvas) {
@@ -6179,8 +6242,8 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
             drawTeacherGuideFrame(tCtx, step);
             var audioCtx = makeAudio();
             if (audioCtx) playSound('bell', audioCtx.currentTime + 0.02, 0.4, { pitch: step * 2, echo: 0, bright: 50 });
-            if (step >= 8) clearInterval(timer);
-          }, 900);
+            if (step >= 9) clearInterval(timer);
+          }, 1100);
         });
       }
 
@@ -6201,11 +6264,11 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
           var interval = setInterval(function () {
             step++;
             drawTeacherGuideFrame(tCtx, step);
-            if (step >= 10) {
+            if (step >= 9) {
               clearInterval(interval);
               rec.stop();
             }
-          }, 600);
+          }, 1100);
         });
       }
 
@@ -6418,6 +6481,15 @@ import { LEVELS, CHALLENGES, MATH_PROBLEMS, LEVEL_LESSONS, PETS } from './data.j
       renderStatus();
       updatePetWidget();
       updateNavButtonsLockState();
+
+      /* — Añadido (Fase 7): pre-calentar el AudioContext en el PRIMER gesto.
+         Crear el contexto tarda ~0.5–1.5s y congelaba el hilo en el primer
+         botón que lo tocara. Con este listener, el costo se paga una sola
+         vez justo tras el primer toque (en la intro o el primer bloque),
+         y el juego queda instantáneo para siempre. — */
+      window.addEventListener('pointerdown', function () {
+        setTimeout(function () { try { makeAudio(); } catch (e) { } }, 0);
+      }, { once: true, capture: true });
 
       /* — Arranque de la intro (movido al final: todo el estado del módulo
          debe estar inicializado antes de que finishIntro pueda llamar a runDemo) — */
